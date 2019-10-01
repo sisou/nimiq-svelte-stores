@@ -18,6 +18,10 @@ let address = 'NQ18 8JC8 DTKE 7G6V 6PJP 6VF8 1N5X K8Q7 21UX'
 let label = 'My Address'
 </script>
 
+<p style="background: lightblue; border-left: solid 3px rgb(0,100,200); padding: 16px;">
+	This is a demo page for <a href="https://github.com/sisou/nimiq-svelte-stores">Nimiq Svelte Stores</a>.
+</p>
+
 <div>Client ready: <strong>{ $ready }</strong></div>
 
 <h3>Consensus</h3>

@@ -5,6 +5,7 @@ This library provides [SvelteJS](https://svelte.dev) stores for a [Nimiq](https:
 Client initialization is already handled for you (mainnet, pico client).
 You simply import the stores that you need.
 
+- [Example](#example)
 - [Setup](#setup)
 - [Stores](#stores)
 - [Writable Stores](#writable-stores)
@@ -17,7 +18,7 @@ You simply import the stores that you need.
 
 ## Setup
 
-1. Install this library: `yarn add --dev nimiq-svelte-stores`.
+1. Install this library from [NPM](https://www.npmjs.com/package/nimiq-svelte-stores): `yarn add --dev nimiq-svelte-stores`.
 2. Add `<script defer src="https://cdn.nimiq.com/v1.5/web.js"></script>` _before_ the bundle in your `public/index.html`.
 3. Import Nimiq stores into your components, see next section.
 
