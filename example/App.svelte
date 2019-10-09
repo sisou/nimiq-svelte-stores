@@ -12,7 +12,7 @@ import {
 	newTransaction,
 	transactions,
 	transactionsRefreshing,
-} from './nimiq-svelte-stores.js'
+} from '..'
 
 let address = 'NQ18 8JC8 DTKE 7G6V 6PJP 6VF8 1N5X K8Q7 21UX'
 let label = 'My Address'

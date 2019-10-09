@@ -2,7 +2,12 @@
   "name": "nimiq-svelte-stores",
   "version": "1.0.0",
   "description": "Provides SvelteJS stores for a Nimiq Blockchain Client",
-  "keywords": ["nimiq", "blockchain", "svelte", "sveltejs"],
+  "keywords": [
+    "nimiq",
+    "blockchain",
+    "svelte",
+    "sveltejs"
+  ],
   "homepage": "https://github.com/sisou/nimiq-svelte-stores",
   "bugs": {
     "url": "https://github.com/sisou/nimiq-svelte-stores/issues"
@@ -16,6 +21,9 @@
     "src/nimiq-svelte-stores.js"
   ],
   "module": "src/nimiq-svelte-stores.js",
+  "dependencies": {
+    "svelte": "^3.0.0"
+  },
   "devDependencies": {
     "npm-run-all": "^4.1.5",
     "rollup": "^1.12.0",
@@ -23,14 +31,13 @@
     "rollup-plugin-livereload": "^1.0.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-svelte": "^5.0.3",
-    "rollup-plugin-terser": "^4.0.4",
-    "svelte": "^3.0.0"
+    "rollup-plugin-terser": "^4.0.4"
   },
   "scripts": {
     "build": "rollup -c",
     "autobuild": "rollup -c -w",
     "dev": "run-p start:dev autobuild",
-    "start": "sirv public --single",
-    "start:dev": "sirv public --single --dev"
+    "start": "sirv example/public --single",
+    "start:dev": "sirv example/public --single --dev"
   }
 }

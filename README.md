@@ -13,12 +13,15 @@ You simply import the stores that you need.
 
 ## Example
 
-- [Running example app](https://nimiq-svelte-stores.netlify.com)
-- [The code for this example](https://github.com/sisou/nimiq-svelte-stores/blob/master/src/App.svelte)
+- [Example app on Netlify](https://nimiq-svelte-stores.netlify.com)
+- [Example code](https://github.com/sisou/nimiq-svelte-stores/blob/master/example/App.svelte)
 
 ## Setup
 
-1. Install this library from [NPM](https://www.npmjs.com/package/nimiq-svelte-stores): `yarn add --dev nimiq-svelte-stores`.
+1. Install this library from [NPM](https://www.npmjs.com/package/nimiq-svelte-stores):
+    ```bash
+    yarn add --dev nimiq-svelte-stores
+    ```
 2. Add the Nimiq script _before_ the bundle in your `public/index.html`:
    ```html
    <script defer src="https://cdn.jsdelivr.net/npm/@nimiq/core-web@v1.5/web.js"></script>
