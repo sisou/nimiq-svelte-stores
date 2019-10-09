@@ -46,13 +46,18 @@ let label = 'My Address'
 <button on:click={() => accounts.add({ address, label })}>Add address</button>
 <button on:click={() => accounts.refresh()} disabled={$accountsRefreshing}>Refresh balances</button>
 <ul>
-	{#each $accounts as account}
+	{#each $accounts as account (account.address.toPlain())}
 		<li>{account.label || '<unnamed>'} - {account.address.toPlain()} ({account.type}): {account.balance / 1e5} NIM</li>
 	{/each}
 </ul>
 
 <h3>Transactions</h3>
-<div>Latest: <strong>{ $newTransaction ? `Tx from ${$newTransaction.sender.toPlain()} to ${$newTransaction.recipient.toPlain()} of ${$newTransaction.value / 1e5} NIM, state: ${$newTransaction.state}` : '' }</strong></div>
+<div>
+	Latest:
+	{#if $newTransaction}
+		<strong>Tx from {$newTransaction.sender.toPlain()} to {$newTransaction.recipient.toPlain()} of {$newTransaction.value / 1e5} NIM, state: {$newTransaction.state}</strong>
+	{/if}
+</div>
 
 <button on:click={() => transactions.refresh()} disabled={$transactionsRefreshing}>Refresh history</button>
 
@@ -64,7 +69,7 @@ let label = 'My Address'
 		<th>Value</th>
 		<th>State</th>
 	</tr>
-	{#each $transactions as tx}
+	{#each $transactions as tx (tx.transactionHash.toPlain())}
 		<tr>
 			<td>{new Date(tx.timestamp * 1000).toLocaleString()}</td>
 			<td>{tx.sender.toPlain()}</td>
@@ -74,4 +79,3 @@ let label = 'My Address'
 		</tr>
 	{/each}
 </table>
-
