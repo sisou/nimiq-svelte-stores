@@ -1,6 +1,6 @@
 {
   "name": "nimiq-svelte-stores",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Provides SvelteJS stores for a Nimiq Blockchain Client",
   "keywords": [
     "nimiq",
