@@ -1,4 +1,45 @@
-import { readable, writable, derived } from 'svelte/store'
+import { readable, writable, derived, Readable, Writable } from 'svelte/store'
+import * as Nimiq from '@nimiq/core-web/types'
+
+type AccountIn = {
+	address: Nimiq.Address | string,
+}
+type ParsedAccountIn = {
+	address: Nimiq.Address
+}
+type Account = {
+	address: Nimiq.Address,
+	type?: string,
+	balance?: number,
+
+	// Vesting Contracts
+	owner?: string,
+	vestingStart?: number,
+	vestingStepBlocks?: number,
+	vestingStepAmount?: number,
+	vestingTotalAmount?: number,
+
+	// HTLCs
+	sender?: string,
+	recipient?: string,
+	hashRoot?: string,
+	hashCount?: number,
+	timeout?: number,
+	totalAmount?: number,
+}
+type AddressLike = Nimiq.Address | string | AccountIn
+
+function addressLikes2AccountIns (input?: AddressLike | AddressLike[]): ParsedAccountIn[] {
+	const addressLikes = input
+		? (Array.isArray(input)
+			? input
+			: [input])
+		: []
+	return addressLikes.map(addressLike => ({
+		...((addressLike as AccountIn).address ? (addressLike as AccountIn) : {}),
+		address: Nimiq.Address.fromAny((addressLike as AccountIn).address || (addressLike as Nimiq.Address | string))
+	}))
+}
 
 // let options = {
 // 	network: 'main',
@@ -7,15 +48,15 @@ import { readable, writable, derived } from 'svelte/store'
 // 	blockConfirmations: undefined,
 // }
 
-export let client
+export let client: Nimiq.Client
 
-const _ready = writable(false)
-export const ready = derived(
+const _ready = writable<boolean>(false)
+export const ready = derived<boolean, Writable<boolean>>(
 	_ready,
 	$_ready => $_ready
 )
 
-export const init = Nimiq.WasmHelper.doImport().then(_ => {
+export const init = Nimiq.WasmHelper.doImport().then(() => {
 	Nimiq.GenesisConfig.main()
 	client = Nimiq.Client.Configuration.builder().instantiateClient()
 	_ready.set(true)
@@ -27,19 +68,19 @@ export const init = Nimiq.WasmHelper.doImport().then(_ => {
  * Consensus
  */
 
-export const consensus = readable('loading', function start(set) {
-	let handle
-	init.then(_ => {
+export const consensus = readable<string>('loading', function start(set) {
+	let handle: Nimiq.Handle
+	init.then(() => {
 		set(client._consensusState)
-		handle = client.addConsensusChangedListener(set)
+		client.addConsensusChangedListener(set).then(h => handle = h)
 	})
 
 	return function stop() {
-		init.then(_ => client.removeListener(handle))
+		init.then(() => client.removeListener(handle))
 	}
 })
 
-export const established = derived(
+export const established = derived<boolean, Readable<string>>(
 	consensus,
 	$consensus => $consensus === 'established'
 )
@@ -49,19 +90,19 @@ export const established = derived(
  * Blockchain
  */
 
-export const headHash = readable(null, function start(set) {
-	let handle
-	init.then(_ => {
+export const headHash = readable<Nimiq.Hash | null>(null, function start(set) {
+	let handle: Nimiq.Handle
+	init.then(() => {
 		if (client._consensusState === 'established') client.getHeadHash().then(set)
-		handle = client.addHeadChangedListener(hash => set(hash))
+		client.addHeadChangedListener(hash => set(hash)).then(h => handle = h)
 	})
 
 	return function stop() {
-		init.then(_ => client.removeListener(handle))
+		init.then(() => client.removeListener(handle))
 	}
 })
 
-export const head = derived(
+export const head = derived<Nimiq.Block | null, Readable<Nimiq.Hash | null>>(
 	headHash,
 	($headHash, set) => {
 		if ($headHash) client.getBlock($headHash).then(set)
@@ -69,7 +110,7 @@ export const head = derived(
 	null
 )
 
-export const height = derived(
+export const height = derived<number, Readable<Nimiq.Block | null>>(
 	head,
 	$head => $head ? $head.height : 0
 )
@@ -100,10 +141,10 @@ export const height = derived(
 	},
 	timeOffset: 0,
  }, function start(set) {
-	let interval
-	init.then(_ => {
+	let interval: number
+	init.then(() => {
 		client.network.getStatistics().then(set)
-		interval = setInterval(_ => client.network.getStatistics().then(set), 1000)
+		interval = window.setInterval(() => client.network.getStatistics().then(set), 1000)
 	})
 
 	return function stop() {
@@ -122,24 +163,20 @@ export const peerCount = derived(
  */
 
 export const accounts = (function createAccountsStore() {
-	const accountsMap = new Nimiq.HashMap()
+	const accountsMap = new Nimiq.HashMap<Nimiq.Address, Account>()
 
-	function add(accounts) {
-		if (!accounts ) return
-		if (!Array.isArray(accounts)) accounts = [accounts]
+	function add(input: AddressLike | AddressLike[]) {
+		const accounts = addressLikes2AccountIns(input)
 		if (!accounts.length ) return
 
-		const newAccounts = []
+		const newAccounts: Account[] = []
 		for (const account of accounts) {
-			const address = Nimiq.Address.fromAny(account.address || account)
-
-			const storedAccount = accountsMap.get(address)
+			const storedAccount = accountsMap.get(account.address)
 			const newAccount = {
 				...(storedAccount || {}),
-				...(account.address ? account : {}),
-				address
+				...account,
 			}
-			accountsMap.put(address, newAccount)
+			accountsMap.put(account.address, newAccount)
 			if (!storedAccount) newAccounts.push(newAccount)
 		}
 
@@ -148,49 +185,45 @@ export const accounts = (function createAccountsStore() {
 		if (newAccounts.length) refresh(newAccounts)
 	}
 
-	function remove(accounts) {
-		if (!accounts) return
-		if (!Array.isArray(accounts)) accounts = [accounts]
+	function remove(input: AddressLike | AddressLike[]) {
+		const accounts = addressLikes2AccountIns(input)
 		if (!accounts.length ) return
 
 		for (const account of accounts) {
-			const address = Nimiq.Address.fromAny(account.address || account)
-			accountsMap.remove(address)
+			accountsMap.remove(account.address)
 		}
 		set(accountsMap.values())
 	}
 
-	function refresh(accounts) {
-		if (!accounts) accounts = accountsMap.keys()
-		if (!Array.isArray(accounts)) accounts = [accounts]
-		if (!accounts.length) return
+	function refresh(input?: AddressLike | AddressLike[]) {
+		let accounts = addressLikes2AccountIns(input)
+		if (!accounts.length) accounts = accountsMap.values()
 
-		const addresses = accounts.map(account => Nimiq.Address.fromAny(account.address || account))
+		const addresses = accounts.map(account => account.address)
 		console.debug('accounts->refresh', addresses.map(a => a.toPlain()))
 
 		_accountsRefreshing.update(c => c + 1)
 
-		init.then(_ => {
-			client.waitForConsensusEstablished().then(_ => {
+		init.then(() => {
+			client.waitForConsensusEstablished().then(() => {
 				client.getAccounts(addresses)
 					.then(accounts => {
 						for (const [i, account] of accounts.entries()) {
 							const address = addresses[i]
-							const storedAccount = accountsMap.get(address)
+							const storedAccount = accountsMap.get(address) || { address }
 							accountsMap.put(address, {
-								...(storedAccount || {}),
+								...storedAccount,
 								...account.toPlain(),
-								address,
 							})
 						}
 						set(accountsMap.values())
 					})
-					.finally(_ => _accountsRefreshing.update(c => c - 1))
+					.finally(() => _accountsRefreshing.update(c => c - 1))
 			})
 		})
 	}
 
-	const { subscribe, set } = writable([], function start() {
+	const { subscribe, set } = writable<Account[]>([], function start() {
 		// Subscribe to headHash store
 		const unsubscribeHeadHashStore = headHash.subscribe(() => refresh())
 
@@ -208,7 +241,7 @@ export const accounts = (function createAccountsStore() {
 })()
 
 const _accountsRefreshing = writable(0)
-export const accountsRefreshing = derived(
+export const accountsRefreshing = derived<boolean, Readable<number>>(
 	_accountsRefreshing,
 	$_accountsRefreshing => $_accountsRefreshing > 0
 )
@@ -218,25 +251,26 @@ export const accountsRefreshing = derived(
  * Transactions
  */
 
-export const newTransaction = (function createNewTransactionStore() {
-	let handle
+export const newTransaction: Readable<Nimiq.Client.TransactionDetails | null> = (function createNewTransactionStore() {
+	let handle: Nimiq.Handle
 
-	function onAccountsChanged(accounts) {
+	function onAccountsChanged(accounts: Account[]) {
 		console.debug('createNewTransactionStore->onAccountsChanged', accounts)
-		init.then(_ => {
-			const newHandle = client.addTransactionListener(set, accounts.map(acc => acc.address))
-			client.removeListener(handle)
-			handle = newHandle
+		init.then(() => {
+			client.addTransactionListener(set, accounts.map(acc => acc.address)).then(newHandle => {
+				client.removeListener(handle)
+				handle = newHandle
+			})
 		})
 	}
 
-	const { subscribe, set } = writable(null, function start() {
+	const { subscribe, set } = writable<Nimiq.Client.TransactionDetails | null>(null, function start() {
 		// Subscribe to address store
 		const unsubscribeAccountsStore = accounts.subscribe(onAccountsChanged)
 
 		return function stop() {
 			unsubscribeAccountsStore()
-			init.then(_ => client.removeListener(handle))
+			init.then(() => client.removeListener(handle))
 		}
 	})
 
@@ -244,21 +278,21 @@ export const newTransaction = (function createNewTransactionStore() {
 })()
 
 export const transactions = (function createTransactionsStore() {
-	const trackedAddresses = new Nimiq.HashSet()
-	let transactionsArray = []
+	const trackedAddresses = new Nimiq.HashSet<Nimiq.Address>()
+	let transactionsArray: Nimiq.Client.TransactionDetails[] = []
 
-	function transactionsForAddress(address) {
+	function transactionsForAddress(address: Nimiq.Address) {
 		return transactionsArray.filter(tx => tx.sender.equals(address) || tx.recipient.equals(address))
 	}
 
-	function sort(a, b) {
+	function sort(a: Nimiq.Client.TransactionDetails, b: Nimiq.Client.TransactionDetails) {
 		if (a.timestamp === b.timestamp) return 0
 		else if (!a.timestamp) return -1
 		else if (!b.timestamp) return 1
 		else return b.timestamp - a.timestamp
 	}
 
-	function add(transactions) {
+	function add(transactions: Nimiq.Client.TransactionDetails | Nimiq.Client.TransactionDetails[] | null) {
 		if (!transactions) return
 		if (!Array.isArray(transactions)) transactions = [transactions]
 		if (!transactions.length) return
@@ -266,7 +300,7 @@ export const transactions = (function createTransactionsStore() {
 		transactions = transactions.map(tx => Nimiq.Client.TransactionDetails.fromPlain(tx))
 		console.debug('transactions->add', transactions)
 
-		const transactionsByHash = new Nimiq.HashMap()
+		const transactionsByHash = new Nimiq.HashMap<Nimiq.Hash, Nimiq.Client.TransactionDetails>()
 		for (const tx of transactionsArray) {
 			transactionsByHash.put(tx.transactionHash, tx)
 		}
@@ -280,25 +314,24 @@ export const transactions = (function createTransactionsStore() {
 		set(transactionsArray)
 	}
 
-	function refresh(accounts) {
-		if (!accounts) accounts = trackedAddresses.values()
-		if (!Array.isArray(accounts)) accounts = [accounts]
-		if (!accounts.length) return
+	function refresh(input?: AddressLike | AddressLike[]) {
+		let addresses = addressLikes2AccountIns(input).map(account => account.address)
+		if (!addresses.length) addresses = trackedAddresses.values()
+		if (!addresses.length) return
 
-		const addresses = accounts.map(account => Nimiq.Address.fromAny(account.address || account))
 		console.debug('transactions->refresh', addresses.map(a => a.toPlain()))
 
 		_transactionsRefreshing.update(c => c + 1)
 
-		init.then(_ => {
-			client.waitForConsensusEstablished().then(_ => {
+		init.then(() => {
+			client.waitForConsensusEstablished().then(() => {
 				Promise.all(addresses.map(address => client.getTransactionsByAddress(address, 0, transactionsForAddress(address)).then(add)))
-					.finally(_ => _transactionsRefreshing.update(c => c - 1))
+					.finally(() => _transactionsRefreshing.update(c => c - 1))
 			})
 		})
 	}
 
-	function onAccountsChanged(accounts) {
+	function onAccountsChanged(accounts: Account[]) {
 		console.debug('createTransactionsStore->onAccountsChanged', accounts)
 
 		// Find untracked addresses
@@ -315,7 +348,7 @@ export const transactions = (function createTransactionsStore() {
 		refresh(newAddresses)
 	}
 
-	const { subscribe, set } = writable([], function start() {
+	const { subscribe, set } = writable<Nimiq.Client.TransactionDetails[]>([], function start() {
 		// Subscribe to address store
 		const unsubscribeAccountsStore = accounts.subscribe(onAccountsChanged)
 		// Subscribe to newTransaction store
@@ -335,7 +368,7 @@ export const transactions = (function createTransactionsStore() {
 })()
 
 const _transactionsRefreshing = writable(0)
-export const transactionsRefreshing = derived(
+export const transactionsRefreshing = derived<boolean, Readable<number>>(
 	_transactionsRefreshing,
 	$_transactionsRefreshing => $_transactionsRefreshing > 0
 )

@@ -3,16 +3,23 @@ import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import livereload from 'rollup-plugin-livereload';
 import { terser } from 'rollup-plugin-terser';
+import typescript from 'rollup-plugin-typescript2';
 
 const production = !process.env.ROLLUP_WATCH;
 
 export default {
 	input: 'example/main.js',
+	external: [
+		'@nimiq/core-web/types',
+	],
 	output: {
 		sourcemap: true,
 		format: 'iife',
 		name: 'app',
-		file: 'example/public/bundle.js'
+		file: 'example/public/bundle.js',
+		globals: {
+			'@nimiq/core-web/types': 'Nimiq',
+		},
 	},
 	plugins: [
 		svelte({
@@ -35,6 +42,14 @@ export default {
 			dedupe: importee => importee === 'svelte' || importee.startsWith('svelte/')
 		}),
 		commonjs(),
+
+		typescript({
+			tsconfigOverride: {
+				compilerOptions: {
+					declaration: false,
+				}
+			},
+		}),
 
 		// Watch the `example/public` directory and refresh the
 		// browser on changes when not in production

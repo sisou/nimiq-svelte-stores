@@ -18,10 +18,12 @@
     "email": "hello@soerenschwert.de"
   },
   "files": [
-    "src/nimiq-svelte-stores.js"
+    "dist"
   ],
-  "module": "src/nimiq-svelte-stores.js",
+  "module": "dist/nimiq-svelte-stores.js",
+  "types": "dist/nimiq-svelte-stores.d.ts",
   "dependencies": {
+    "@nimiq/core-web": "^1.5.1",
     "svelte": "^3.0.0"
   },
   "devDependencies": {
@@ -31,13 +33,14 @@
     "rollup-plugin-livereload": "^1.0.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-svelte": "^5.0.3",
-    "rollup-plugin-terser": "^4.0.4"
+    "rollup-plugin-terser": "^4.0.4",
+    "rollup-plugin-typescript2": "^0.24.3",
+    "typescript": "^3.6.3"
   },
   "scripts": {
-    "build": "rollup -c",
-    "autobuild": "rollup -c -w",
+    "build": "rm -rf dist && tsc",
     "dev": "run-p start:dev autobuild",
-    "start": "sirv example/public --single",
-    "start:dev": "sirv example/public --single --dev"
+    "start:dev": "sirv example/public --single --dev",
+    "autobuild": "rollup -c -w"
   }
 }
