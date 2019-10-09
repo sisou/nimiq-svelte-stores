@@ -1,5 +1,10 @@
 import { readable, writable, derived } from 'svelte/store'
 
+import Nimiq from '@nimiq/core-web'
+
+// Make Nimiq available to consumers
+export { Nimiq }
+
 // let options = {
 // 	network: 'main',
 // 	features: [],
@@ -15,7 +20,7 @@ export const ready = derived(
 	$_ready => $_ready
 )
 
-export const init = Nimiq.WasmHelper.doImport().then(_ => {
+export const init = Nimiq.load().then(_ => {
 	Nimiq.GenesisConfig.main()
 	client = Nimiq.Client.Configuration.builder().instantiateClient()
 	_ready.set(true)

@@ -3,6 +3,7 @@ import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import livereload from 'rollup-plugin-livereload';
 import { terser } from 'rollup-plugin-terser';
+import copy from 'rollup-plugin-copy';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -23,6 +24,13 @@ export default {
 			css: css => {
 				css.write('example/public/bundle.css');
 			}
+		}),
+
+		// copy Nimiq web-worker files to example/public dir
+		copy({
+			targets: [{ src: 'node_modules/@nimiq/core-web/worker*', dest: 'example/public' }],
+			copyOnce: true,
+			verbose: true,
 		}),
 
 		// If you have external dependencies installed from
