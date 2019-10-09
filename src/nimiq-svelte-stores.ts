@@ -94,7 +94,7 @@ export const headHash = readable<Nimiq.Hash | null>(null, function start(set) {
 	let handle: Nimiq.Handle
 	init.then(() => {
 		if (client._consensusState === 'established') client.getHeadHash().then(set)
-		client.addHeadChangedListener(hash => set(hash)).then(h => handle = h)
+		client.addHeadChangedListener(set).then(h => handle = h)
 	})
 
 	return function stop() {
@@ -154,7 +154,7 @@ export const height = derived<number, Readable<Nimiq.Block | null>>(
 
 export const peerCount = derived(
 	networkStatistics,
-	$networkStatistics => $networkStatistics ? $networkStatistics.totalPeerCount : 0
+	$networkStatistics => $networkStatistics.totalPeerCount
 )
 
 
@@ -198,6 +198,7 @@ export const accounts = (function createAccountsStore() {
 	function refresh(input?: AddressLike | AddressLike[]) {
 		let accounts = addressLikes2AccountIns(input)
 		if (!accounts.length) accounts = accountsMap.values()
+		if (!accounts.length) return
 
 		const addresses = accounts.map(account => account.address)
 		console.debug('accounts->refresh', addresses.map(a => a.toPlain()))
