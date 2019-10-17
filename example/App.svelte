@@ -1,5 +1,6 @@
 <script>
 import {
+	start,
 	ready,
 	consensus,
 	established,
@@ -13,6 +14,8 @@ import {
 	transactions,
 	transactionsRefreshing,
 } from '../src/nimiq-svelte-stores.ts'
+
+start()
 
 let address = 'NQ18 8JC8 DTKE 7G6V 6PJP 6VF8 1N5X K8Q7 21UX'
 let label = 'My Address'

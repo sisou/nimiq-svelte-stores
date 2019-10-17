@@ -26,7 +26,17 @@ You simply import the stores that you need.
    ```html
    <script defer src="https://cdn.jsdelivr.net/npm/@nimiq/core-web@v1.5/web.js"></script>
    ```
-3. Import Nimiq stores into your components, see next section.
+3. Import Nimiq stores into your components and start the client, see next sections.
+
+## Start
+
+To start the Nimiq Client, call the exported `start` function:
+
+```js
+import { start } from 'nimiq-svelte-stores`
+
+start()
+```
 
 ## Stores
 
@@ -117,7 +127,7 @@ This library exposes a [Nimiq Client](https://doc.esdoc.org/github.com/nimiq/cor
 This export is `undefined` until:
 
 - the `ready` store turned `true` or
-- the exported `init` promise resolved
+- the `start()` function resolves
 
 There are two ways to make sure the `client` is defined when you use it:
 
@@ -136,14 +146,14 @@ There are two ways to make sure the `client` is defined when you use it:
 <button disabled={!$ready} on:click={sendTransaction}>Send Transaction</button>
 ```
 
-2. Await the exported `init` promise:
+2. Await the exported `start()` function:
 
 ```js
-import { init, client } from 'nimiq-svelte-stores'
+import { start, client } from 'nimiq-svelte-stores'
 
 async function sendTransaction() {
     const tx = ...;
-    await init // or: const client = await init
+    await start() // or: const client = await start()
     client.sendTransaction(tx)
 }
 ```

@@ -55,12 +55,19 @@ export const ready = derived<boolean, Writable<boolean>>(
 	$_ready => $_ready
 )
 
-export const init = Nimiq.WasmHelper.doImport().then(() => {
-	Nimiq.GenesisConfig.main()
-	client = Nimiq.Client.Configuration.builder().instantiateClient()
-	_ready.set(true)
-	return client
-})
+let _initResolver: (client: Nimiq.Client) => void
+const init = new Promise<Nimiq.Client>(resolve => _initResolver = resolve)
+
+let _startPromise: Promise<Nimiq.Client>
+export const start = function() {
+	return _startPromise || (_startPromise = Nimiq.WasmHelper.doImport().then(() => {
+		Nimiq.GenesisConfig.main()
+		client = Nimiq.Client.Configuration.builder().instantiateClient()
+		_ready.set(true)
+		_initResolver(client)
+		return client
+	}))
+}
 
 
 /**
