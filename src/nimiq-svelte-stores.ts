@@ -169,7 +169,7 @@ export const peerCount = derived(
  */
 
 export const accounts = (function createAccountsStore() {
-	const accountsMap = new Nimiq.HashMap<Nimiq.Address, Account>()
+	const accountsMap = new Map<string, Account>()
 
 	function add(input: AddressLike | AddressLike[]) {
 		const accounts = addressLikes2AccountIns(input)
@@ -177,16 +177,17 @@ export const accounts = (function createAccountsStore() {
 
 		const newAccounts: Account[] = []
 		for (const account of accounts) {
-			const storedAccount = accountsMap.get(account.address)
+			const addressHex = account.address.toHex()
+			const storedAccount = accountsMap.get(addressHex)
 			const newAccount = {
 				...(storedAccount || {}),
 				...account,
 			}
-			accountsMap.put(account.address, newAccount)
+			accountsMap.set(addressHex, newAccount)
 			if (!storedAccount) newAccounts.push(newAccount)
 		}
 
-		set(accountsMap.values())
+		set([...accountsMap.values()])
 
 		if (newAccounts.length) refresh(newAccounts)
 	}
@@ -196,14 +197,14 @@ export const accounts = (function createAccountsStore() {
 		if (!accounts.length ) return
 
 		for (const account of accounts) {
-			accountsMap.remove(account.address)
+			accountsMap.delete(account.address.toHex())
 		}
-		set(accountsMap.values())
+		set([...accountsMap.values()])
 	}
 
 	function refresh(input?: AddressLike | AddressLike[]) {
 		let accounts = addressLikes2AccountIns(input)
-		if (!accounts.length) accounts = accountsMap.values()
+		if (!accounts.length) accounts = [...accountsMap.values()]
 		if (!accounts.length) return
 
 		const addresses = accounts.map(account => account.address)
@@ -217,13 +218,14 @@ export const accounts = (function createAccountsStore() {
 					.then(accounts => {
 						for (const [i, account] of accounts.entries()) {
 							const address = addresses[i]
-							const storedAccount = accountsMap.get(address) || { address }
-							accountsMap.put(address, {
+							const addressHex = address.toHex()
+							const storedAccount = accountsMap.get(addressHex) || { address }
+							accountsMap.set(addressHex, {
 								...storedAccount,
 								...account.toPlain(),
 							})
 						}
-						set(accountsMap.values())
+						set([...accountsMap.values()])
 					})
 					.finally(() => _accountsRefreshing.update(c => c - 1))
 			})
@@ -284,15 +286,25 @@ export const newTransaction: Readable<Nimiq.Client.TransactionDetails | null> = 
 	return { subscribe }
 })()
 
-export const transactions = (function createTransactionsStore() {
-	const trackedAddresses = new Nimiq.HashSet<Nimiq.Address>()
-	let transactionsArray: Nimiq.Client.TransactionDetails[] = []
+type TransactionItem = [string, Nimiq.Client.TransactionDetails]
 
-	function transactionsForAddress(address: Nimiq.Address) {
-		return transactionsArray.filter(tx => tx.sender.equals(address) || tx.recipient.equals(address))
+export const transactions = (function createTransactionsStore() {
+	const trackedAddresses = new Set<string>()
+	let transactionsArray: TransactionItem[] = []
+
+	function pickTransactions(array: TransactionItem[]): Nimiq.Client.TransactionDetails[] {
+		return array.map(i => i[1])
 	}
 
-	function sort(a: Nimiq.Client.TransactionDetails, b: Nimiq.Client.TransactionDetails) {
+	function transactionsForAddress(address: Nimiq.Address): Nimiq.Client.TransactionDetails[] {
+		const transactionItems = transactionsArray
+			.filter(i => i[1].sender.equals(address) || i[1].recipient.equals(address))
+		return pickTransactions(transactionItems)
+	}
+
+	function sort(ia: TransactionItem, ib: TransactionItem) {
+		const a = ia[1]
+		const b = ib[1]
 		if (a.timestamp === b.timestamp) return 0
 		else if (!a.timestamp) return -1
 		else if (!b.timestamp) return 1
@@ -307,23 +319,20 @@ export const transactions = (function createTransactionsStore() {
 		transactions = transactions.map(tx => Nimiq.Client.TransactionDetails.fromPlain(tx))
 		console.debug('transactions->add', transactions)
 
-		const transactionsByHash = new Nimiq.HashMap<Nimiq.Hash, Nimiq.Client.TransactionDetails>()
-		for (const tx of transactionsArray) {
-			transactionsByHash.put(tx.transactionHash, tx)
-		}
+		const transactionsByHash = new Map(transactionsArray)
 
 		for (const tx of transactions) {
-			transactionsByHash.put(tx.transactionHash, tx)
+			transactionsByHash.set(tx.transactionHash.toHex(), tx)
 		}
 
-		transactionsArray = transactionsByHash.values().sort(sort)
+		transactionsArray = [...transactionsByHash.entries()].sort(sort)
 
-		set(transactionsArray)
+		set(pickTransactions(transactionsArray))
 	}
 
 	function refresh(input?: AddressLike | AddressLike[]) {
 		let addresses = addressLikes2AccountIns(input).map(account => account.address)
-		if (!addresses.length) addresses = trackedAddresses.values()
+		if (!addresses.length) addresses = [...trackedAddresses.values()].map(a => Nimiq.Address.fromHex(a))
 		if (!addresses.length) return
 
 		console.debug('transactions->refresh', addresses.map(a => a.toPlain()))
@@ -344,9 +353,10 @@ export const transactions = (function createTransactionsStore() {
 		// Find untracked addresses
 		const newAddresses = []
 		for (const address of accounts.map(acc => acc.address)) {
-			if (trackedAddresses.contains(address)) continue
+			const addressHex = address.toHex()
+			if (trackedAddresses.has(addressHex)) continue
 			newAddresses.push(address)
-			trackedAddresses.add(address)
+			trackedAddresses.add(addressHex)
 		}
 
 		if (!newAddresses.length) return
