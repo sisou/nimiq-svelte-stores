@@ -1,5 +1,4 @@
 import { readable, writable, derived, Readable, Writable } from 'svelte/store'
-import * as Nimiq from '@nimiq/core-web/types'
 
 type AccountIn = {
 	address: Nimiq.Address | string,
