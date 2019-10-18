@@ -58,11 +58,19 @@ export const ready = derived<boolean, Writable<boolean>>(
 let _initResolver: (client: Nimiq.Client) => void
 const init = new Promise<Nimiq.Client>(resolve => _initResolver = resolve)
 
+export type configCallback = (config: Nimiq.Client.ConfigurationBuilder) => void
+
 let _startPromise: Promise<Nimiq.Client>
-export const start = function() {
+export const start = function(configCallback?: configCallback) {
 	return _startPromise || (_startPromise = Nimiq.WasmHelper.doImport().then(() => {
 		Nimiq.GenesisConfig.main()
-		client = Nimiq.Client.Configuration.builder().instantiateClient()
+
+		const config = Nimiq.Client.Configuration.builder()
+		if (typeof configCallback === 'function') {
+			configCallback(config)
+		}
+		client = config.instantiateClient()
+
 		_ready.set(true)
 		_initResolver(client)
 		return client

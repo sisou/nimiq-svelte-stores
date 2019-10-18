@@ -15,6 +15,7 @@ import {
 	transactionsRefreshing,
 } from '../src/nimiq-svelte-stores.ts'
 
+// start((config) => config.volatile(true))
 start()
 
 let address = 'NQ18 8JC8 DTKE 7G6V 6PJP 6VF8 1N5X K8Q7 21UX'

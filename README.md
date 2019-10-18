@@ -7,9 +7,11 @@ You simply import the stores that you need.
 
 - [Example](#example)
 - [Setup](#setup)
+- [Start](#start)
 - [Stores](#stores)
 - [Writable Stores](#writable-stores)
 - [Client](#client)
+- [Config](#config)
 
 ## Example
 
@@ -37,6 +39,8 @@ import { start } from 'nimiq-svelte-stores`
 
 start()
 ```
+
+Advanced: [Learn how to configure the Nimiq Client](#config).
 
 ## Stores
 
@@ -124,7 +128,8 @@ of those accounts are refreshed. If no argument is passed, the history of all st
 ## Client
 
 This library exposes a [Nimiq Client](https://doc.esdoc.org/github.com/nimiq/core-js/class/src/main/generic/api/Client.js~Client.html) as the `client` export.
-This export is `undefined` until:
+For configuration options, see [Config](#config).
+The `client` export is `undefined` until:
 
 - the `ready` store turned `true` or
 - the `start()` function resolves
@@ -161,3 +166,21 @@ async function sendTransaction() {
 The Nimiq Client API is documented here: https://doc.esdoc.org/github.com/nimiq/core-js/class/src/main/generic/api/Client.js~Client.html
 
 Tutorials for sending transactions are here: https://nimiq.github.io/tutorials/basics-3-transactions
+
+## Config
+
+The Nimiq Client that is created internally in this library can be configured during first start-up.
+The `start()` method therefore takes a callback as its first argument.
+This callback receives a [`Nimiq.Client.ConfigurationBuilder`](https://doc.esdoc.org/github.com/nimiq/core-js/class/src/main/generic/api/Configuration.js~ConfigurationBuilder.html) instance as an argument, which can be manipulated inside the callback.
+
+*Note:* The client is only created once, so the config callback is only effective in the _first call_ to the `start()` function.
+
+```js
+start((config) => {
+    // Create a volatile consensus (not storing peer information across page reloads)
+    config.volatile(true)
+
+    // Require a local mempool (creates a light consensus)
+    client.feature(Nimiq.Client.Feature.MEMPOOL)
+})
+```
