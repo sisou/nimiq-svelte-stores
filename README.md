@@ -24,7 +24,7 @@ You simply import the stores that you need.
     ```
 2. Add the Nimiq script _before_ the bundle in your `public/index.html`:
    ```html
-   <script defer src="https://cdn.jsdelivr.net/npm/@nimiq/core-web@v1.5/web.js"></script>
+   <script defer src="https://cdn.nimiq-testnet.com/v1.5.2/web.js"></script>
    ```
 3. Import Nimiq stores into your components and start the client, see next sections.
 
