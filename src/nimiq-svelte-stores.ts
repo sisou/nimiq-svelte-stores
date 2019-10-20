@@ -300,6 +300,19 @@ export const transactions = (function createTransactionsStore() {
 	const trackedAddresses = new Set<string>()
 	let transactionsArray: TransactionItem[] = []
 
+	const options = {
+		sort: function(a: Nimiq.Client.TransactionDetails, b: Nimiq.Client.TransactionDetails) {
+			if (a.timestamp === b.timestamp) return 0
+			else if (!a.timestamp) return -1
+			else if (!b.timestamp) return 1
+			else return b.timestamp - a.timestamp
+		},
+	}
+
+	function setSort(sort: (a: Nimiq.Client.TransactionDetails, b: Nimiq.Client.TransactionDetails) => number) {
+		options.sort = sort
+	}
+
 	function pickTransactions(array: TransactionItem[]): Nimiq.Client.TransactionDetails[] {
 		return array.map(i => i[1])
 	}
@@ -310,13 +323,8 @@ export const transactions = (function createTransactionsStore() {
 		return pickTransactions(transactionItems)
 	}
 
-	function sort(ia: TransactionItem, ib: TransactionItem) {
-		const a = ia[1]
-		const b = ib[1]
-		if (a.timestamp === b.timestamp) return 0
-		else if (!a.timestamp) return -1
-		else if (!b.timestamp) return 1
-		else return b.timestamp - a.timestamp
+	function sortItems(ia: TransactionItem, ib: TransactionItem) {
+		return options.sort(ia[1], ib[1])
 	}
 
 	function add(transactions: Nimiq.Client.TransactionDetails | Nimiq.Client.TransactionDetails[] | null) {
@@ -333,7 +341,7 @@ export const transactions = (function createTransactionsStore() {
 			transactionsByHash.set(tx.transactionHash.toHex(), tx)
 		}
 
-		transactionsArray = [...transactionsByHash.entries()].sort(sort)
+		transactionsArray = [...transactionsByHash.entries()].sort(sortItems)
 
 		set(pickTransactions(transactionsArray))
 	}
@@ -389,6 +397,7 @@ export const transactions = (function createTransactionsStore() {
 		subscribe,
 		add,
 		refresh,
+		setSort,
 	}
 })()
 

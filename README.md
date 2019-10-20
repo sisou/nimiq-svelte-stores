@@ -125,6 +125,26 @@ The `transactions.refresh()` method can be used to manually trigger fetching the
 or all stored `accounts`. When passed any of the arguments accepted by the `accounts.add` method, only the histories
 of those accounts are refreshed. If no argument is passed, the history of all stored accounts is refreshed.
 
+### transactions.setSort()
+
+The `transactions.setSort()` method allows you to overwrite the library's transaction-sorting algorithm.
+(By default, transactions are sorted 'newest first'.)
+
+Pass your custom sort function to the `setSort()` method.
+Your sort function receives two arguments, both `Nimiq.Client.TransactionDetails`, and is required to return a number:
+`< 0` if the first argument should be sorted first, `> 0` if the second argument should be sorted first, `0` if both arguments should be sorted equally.
+
+```js
+// Sort transactions by their hash value, ascending
+function customSort(a, b) {
+    const aValue = parseInt(a.transactionHash.toHex().substring(0, 10), 16)
+    const bValue = parseInt(b.transactionHash.toHex().substring(0, 10), 16)
+    return a - b
+}
+
+transactions.setSort(customSort)
+```
+
 ## Client
 
 This library exposes a [Nimiq Client](https://doc.esdoc.org/github.com/nimiq/core-js/class/src/main/generic/api/Client.js~Client.html) as the `client` export.

@@ -15,6 +15,7 @@ import {
 	transactionsRefreshing,
 } from '../src/nimiq-svelte-stores.ts'
 
+// transactions.setSort((a, b) => parseInt(a.transactionHash.toHex().substring(0, 6), 16) - parseInt(b.transactionHash.toHex().substring(0, 6), 16))
 // start((config) => config.volatile(true))
 start()
 
