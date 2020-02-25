@@ -18,10 +18,10 @@
     esutils "^2.0.2"
     js-tokens "^4.0.0"
 
-"@nimiq/core-web@^1.5.1":
-  version "1.5.1"
-  resolved "https://registry.yarnpkg.com/@nimiq/core-web/-/core-web-1.5.1.tgz#1fabddd96000fa404321ba66b75779f5f22405d4"
-  integrity sha512-t5i8+Sg5uN0WD+hIlE7d2g6D7Bf3RnY/SJo6En+D4zfe8JrAdJAkzpP5q8wV7OEg8Mnj8eC3MFaPnpyGs5kazg==
+"@nimiq/core-web@^1.5.4":
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/@nimiq/core-web/-/core-web-1.5.4.tgz#647e3f018b5a3245f1feb028ca77155a89528cb4"
+  integrity sha512-g08sY0afLC6u1zfWsS+vhNm90XpPU4bWI9k9qAiqicxXtF0sM+f7CyfXuUXRjeK6cEqeK3GLesygT4BM5kOhTQ==
 
 "@types/estree@0.0.39":
   version "0.0.39"
