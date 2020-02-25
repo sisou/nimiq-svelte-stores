@@ -311,6 +311,8 @@ export const transactions = (function createTransactionsStore() {
 
 	function setSort(sort: (a: Nimiq.Client.TransactionDetails, b: Nimiq.Client.TransactionDetails) => number) {
 		options.sort = sort
+
+		sortAndSet(transactionsArray)
 	}
 
 	function pickTransactions(array: TransactionItem[]): Nimiq.Client.TransactionDetails[] {
@@ -327,6 +329,12 @@ export const transactions = (function createTransactionsStore() {
 		return options.sort(ia[1], ib[1])
 	}
 
+	function sortAndSet(array: Iterable<TransactionItem>) {
+		transactionsArray = [...array].sort(sortItems)
+
+		set(pickTransactions(transactionsArray))
+	}
+
 	function add(transactions: Nimiq.Client.TransactionDetails | Nimiq.Client.TransactionDetails[] | null) {
 		if (!transactions) return
 		if (!Array.isArray(transactions)) transactions = [transactions]
@@ -341,9 +349,7 @@ export const transactions = (function createTransactionsStore() {
 			transactionsByHash.set(tx.transactionHash.toHex(), tx)
 		}
 
-		transactionsArray = [...transactionsByHash.entries()].sort(sortItems)
-
-		set(pickTransactions(transactionsArray))
+		sortAndSet(transactionsByHash.entries())
 	}
 
 	function refresh(input?: AddressLike | AddressLike[]) {
