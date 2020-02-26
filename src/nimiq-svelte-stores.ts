@@ -28,6 +28,11 @@ type Account = {
 }
 type AddressLike = Nimiq.Address | string | AccountIn
 
+type Options = {
+	network: 'main' | 'test',
+	fetchTransactionHistory: boolean,
+}
+
 function addressLikes2AccountIns (input?: AddressLike | AddressLike[]): ParsedAccountIn[] {
 	const addressLikes = input
 		? (Array.isArray(input)
@@ -40,12 +45,10 @@ function addressLikes2AccountIns (input?: AddressLike | AddressLike[]): ParsedAc
 	}))
 }
 
-// let options = {
-// 	network: 'main',
-// 	features: [],
-// 	volatile: undefined,
-// 	blockConfirmations: undefined,
-// }
+let globalOptions: Options = {
+	network: 'main',
+	fetchTransactionHistory: true,
+}
 
 export let client: Nimiq.Client
 
@@ -58,12 +61,17 @@ export const ready = derived<boolean, Writable<boolean>>(
 let _initResolver: (client: Nimiq.Client) => void
 const init = new Promise<Nimiq.Client>(resolve => _initResolver = resolve)
 
-export type configCallback = (config: Nimiq.Client.ConfigurationBuilder) => void
+export type ConfigCallback = (config: Nimiq.Client.ConfigurationBuilder) => void
 
 let _startPromise: Promise<Nimiq.Client>
-export const start = function(configCallback?: configCallback) {
+export const start = function(configCallback?: ConfigCallback, options?: Partial<Options>) {
+	globalOptions = {
+		...globalOptions,
+		...options,
+	}
+
 	return _startPromise || (_startPromise = Nimiq.WasmHelper.doImport().then(() => {
-		Nimiq.GenesisConfig.main()
+		Nimiq.GenesisConfig[globalOptions.network]()
 
 		const config = Nimiq.Client.Configuration.builder()
 		if (typeof configCallback === 'function') {
@@ -363,6 +371,11 @@ export const transactions = (function createTransactionsStore() {
 
 		init.then(() => {
 			client.waitForConsensusEstablished().then(() => {
+				if (!globalOptions.fetchTransactionHistory) {
+					_transactionsRefreshing.update(c => c - 1)
+					return
+				}
+
 				Promise.all(addresses.map(address => client.getTransactionsByAddress(address, 0, transactionsForAddress(address)).then(add)))
 					.finally(() => _transactionsRefreshing.update(c => c - 1))
 			})

@@ -16,7 +16,9 @@ import {
 } from '../src/nimiq-svelte-stores.ts'
 
 // transactions.setSort((a, b) => parseInt(a.transactionHash.toHex().substring(0, 6), 16) - parseInt(b.transactionHash.toHex().substring(0, 6), 16))
-// start((config) => config.volatile(true))
+// start((config) => config.volatile(true), {
+// 	fetchTransactionHistory: false,
+// })
 start()
 
 let address = 'NQ18 8JC8 DTKE 7G6V 6PJP 6VF8 1N5X K8Q7 21UX'
