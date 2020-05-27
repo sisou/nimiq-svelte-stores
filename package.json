@@ -39,6 +39,7 @@
   },
   "scripts": {
     "build": "rm -rf dist && tsc",
+    "build:demo": "rollup -c",
     "dev": "run-p start:dev autobuild",
     "start:dev": "sirv example/public --single --dev",
     "autobuild": "rollup -c -w"
